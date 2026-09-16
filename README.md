@@ -1,4 +1,4 @@
-# Airntell Mine Simulator — tester downloads
+# Airntell Flight Simulator — tester downloads
 
 Desktop preview of the open-pit mine environment with moving workers and machinery, inspection cameras, and local M300 RTK / Sentinel drone views.
 
@@ -6,7 +6,7 @@ This repository contains downloads only. The development repository is private.
 
 ## Install and update
 
-Download the launcher ZIP for your operating system from [Releases](https://github.com/InushaDeSilva/airntell-simulator-releases/releases). Extract the entire folder and open AirntellMineLauncher. Keep the accompanying libraries beside the launcher.
+Download the launcher ZIP for your operating system from [Releases](https://github.com/InushaDeSilva/airntell-simulator-releases/releases). Extract the entire folder and open AirntellFlightSimulatorLauncher. Keep the accompanying libraries beside the launcher.
 
 Choose **Download and install** in the launcher. It downloads the mine automatically; you do not need to join the large `.part` files yourself. Keep several gigabytes of free space for the download, installation and previous version.
 
