@@ -1,6 +1,6 @@
 # Airntell Flight Simulator — tester downloads
 
-Desktop preview of the open-pit mine environment with moving workers and machinery, inspection cameras, and local M300 RTK / Sentinel drone views.
+Desktop preview of the open-pit mine environment with moving workers and machinery, inspection cameras, and local M300 RTK / Sentinel drone views. The current release provides Windows x64 and Windows ARM64 packages.
 
 This repository contains downloads only. The development repository is private.
 
@@ -23,4 +23,4 @@ The bootstrap launcher itself is replaced manually when a new launcher ZIP is re
 
 This preview has no live DJI connection or flight-control authority. Manual controls move the local visual model only. Aircraft telemetry integration and calibrated sensors are later work. The Sentinel model's physical scale is provisional.
 
-Visual quality is the priority; demanding graphics profiles need a capable GPU. Use the available graphics presets for your device. Windows, macOS and Linux are the intended desktop targets. There is no mobile version.
+Visual quality is the priority; demanding graphics profiles need a capable GPU. Use the available graphics presets for your device. Future macOS and Linux packages will be listed on Releases when they are available. There is no mobile version.
