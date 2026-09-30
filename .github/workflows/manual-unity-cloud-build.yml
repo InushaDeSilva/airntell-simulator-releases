@@ -1,0 +1,93 @@
+name: Manual Unity Cloud build
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Full SHA of the reviewed private Unity source commit
+        required: true
+        type: string
+      platform:
+        description: Desktop platform to build
+        required: true
+        type: choice
+        options:
+          - win-x64
+          - win-arm64
+          - osx-arm64
+          - osx-x64
+          - linux-x64
+      unity_target_id:
+        description: Unity Build Automation target ID for this platform
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unity-cloud-${{ inputs.source_commit }}-${{ inputs.platform }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ inputs.platform }} from Unity Cloud
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      UNITY_BUILD_AUTOMATION_API: https://build-automation.services.api.unity.com/v2
+      UNITY_ORG_ID: '3574453826117'
+      UNITY_PROJECT_ID: 4a414346-9a4d-4864-99fb-39fd8026d7f5
+      UNITY_BUILD_AUTOMATION_AUTH: ${{ secrets.UNITY_BUILD_AUTOMATION_AUTH }}
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      PLATFORM: ${{ inputs.platform }}
+      TARGET_ID: ${{ inputs.unity_target_id }}
+    steps:
+      - name: Validate manual request
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_COMMIT" =~ ^[0-9a-fA-F]{40}$ ]] || { echo '::error::source_commit must be a full Git SHA'; exit 1; }
+          [[ "$TARGET_ID" =~ ^[a-zA-Z0-9_-]+$ ]] || { echo '::error::Invalid Unity target ID'; exit 1; }
+          [[ -n "$UNITY_BUILD_AUTOMATION_AUTH" ]] || { echo '::error::Set the UNITY_BUILD_AUTOMATION_AUTH Actions secret in this repository'; exit 1; }
+      - name: Start Unity build
+        id: start
+        shell: bash
+        run: |
+          set -euo pipefail
+          auth="${UNITY_BUILD_AUTOMATION_AUTH#Basic }"
+          endpoint="$UNITY_BUILD_AUTOMATION_API/orgs/$UNITY_ORG_ID/projects/$UNITY_PROJECT_ID/buildtargets/$TARGET_ID/builds"
+          payload=$(jq -n --arg commit "$SOURCE_COMMIT" '{branch:"main",commit:$commit,clean:false,causedBy:"personal-releases-manual-action"}')
+          curl --fail-with-body --retry 3 --retry-delay 5 -sS \
+            -X POST -H "Authorization: Basic $auth" -H 'Content-Type: application/json' \
+            --data "$payload" "$endpoint" > "$RUNNER_TEMP/uba-start.json"
+          build_number=$(jq -r 'if type == "array" then (map(.buildNumber // .build // empty)[0] // empty) else (.buildNumber // .build // empty) end' "$RUNNER_TEMP/uba-start.json")
+          [[ "$build_number" =~ ^[0-9]+$ ]] || { echo '::error::Unity did not return a build number'; exit 1; }
+          echo "build_number=$build_number" >> "$GITHUB_OUTPUT"
+          echo "Started $PLATFORM Unity build #$build_number from $SOURCE_COMMIT" >> "$GITHUB_STEP_SUMMARY"
+      - name: Wait for Unity build and list artifacts
+        shell: bash
+        env:
+          BUILD_NUMBER: ${{ steps.start.outputs.build_number }}
+        run: |
+          set -euo pipefail
+          auth="${UNITY_BUILD_AUTOMATION_AUTH#Basic }"
+          endpoint="$UNITY_BUILD_AUTOMATION_API/orgs/$UNITY_ORG_ID/projects/$UNITY_PROJECT_ID/buildtargets/$TARGET_ID/builds/$BUILD_NUMBER"
+          for attempt in $(seq 1 360); do
+            curl --fail-with-body --retry 3 --retry-delay 5 -sS \
+              -H "Authorization: Basic $auth" "$endpoint" > "$RUNNER_TEMP/uba-status.json"
+            status=$(jq -r 'if type == "array" then .[0].buildStatus else .buildStatus end // "unknown"' "$RUNNER_TEMP/uba-status.json")
+            echo "Build #$BUILD_NUMBER: $status ($attempt/360)"
+            case "$status" in
+              success|succeeded|finished|completed) break ;;
+              failure|failed|canceled|cancelled|error) echo "::error::Unity build ended with $status"; exit 1 ;;
+            esac
+            [[ "$attempt" -lt 360 ]] || { echo '::error::Unity build timed out'; exit 1; }
+            sleep 60
+          done
+          curl --fail-with-body --retry 3 --retry-delay 5 -sS \
+            -H "Authorization: Basic $auth" "$endpoint/artifacts" > "$RUNNER_TEMP/uba-artifacts.json"
+          echo "Unity build #$BUILD_NUMBER completed for $PLATFORM." >> "$GITHUB_STEP_SUMMARY"
+          echo 'Artifact names:' >> "$GITHUB_STEP_SUMMARY"
+          jq -r 'if type == "array" then .[] else .artifacts[]? end | .files[]?.filename // empty | "- `\(.)`"' "$RUNNER_TEMP/uba-artifacts.json" >> "$GITHUB_STEP_SUMMARY"
+          echo 'This workflow does not create or publish a GitHub Release.' >> "$GITHUB_STEP_SUMMARY"
