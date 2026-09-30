@@ -1,4 +1,4 @@
-# Airntell Flight Simulator — tester downloads
+# Airntell Flight Simulator downloads
 
 Desktop preview of the open-pit mine environment with moving workers and machinery, inspection cameras, and local M300 RTK / Sentinel drone views. The current release provides Windows x64 and Windows ARM64 packages.
 
