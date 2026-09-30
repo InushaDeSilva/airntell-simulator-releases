@@ -1,11 +1,17 @@
 # Airntell Flight Simulator
 
-Download tester builds from [Releases](https://github.com/InushaDeSilva/airntell-simulator-releases/releases). This repository holds downloads; the Unity source is private.
+Download builds from [Releases](https://github.com/InushaDeSilva/airntell-simulator-releases/releases). This repository hosts tester downloads; the Unity source is private.
 
-Release `v0.1.13` includes Windows x64 and ARM64, macOS Apple Silicon and Intel, and Linux x64 packages. Windows builds were installed and checked for live sensor streaming on a Windows ARM64 computer. macOS and Linux were cross-built and package-checked; native runtime testing is pending. Read the release notes for the remaining sensor and performance limitations.
+**Windows:** run the x64 or ARM64 `Setup` installer. It creates a direct game shortcut.
 
-Download the launcher ZIP matching your OS and architecture, extract the entire folder, and open the launcher. Use **Download and install** to fetch the simulator. It handles the large split game files automatically. Keep the launcher files together. You can start an installed version offline.
+**macOS:** download the Apple Silicon or Intel ZIP, extract it, and open the app. These tester builds are unsigned and not notarized.
 
-Updates are optional. The current launcher checks GitHub Releases and installs after you close the simulator. The in-game main menu and download/install flow are still unfinished. The launcher itself is replaced by downloading a newer launcher ZIP.
+**Linux:** extract the x64 ZIP and run `AirntellFlightSimulator.x86_64`. If your archive tool strips permissions, use `chmod +x AirntellFlightSimulator.x86_64`.
 
-The simulator is a local open-pit mine preview with synthetic sensor data. It is not connected to a real aircraft. Packages are unsigned; macOS packages are not notarized. Releases are published manually, only when requested.
+The game opens its own main menu. Enter the open-pit mine from there. Optional updates download inside the game and install after it closes. No separate launcher is required. The `.partNNN` assets and platform JSON files are used by the in-game updater; download the installer or full ZIP for a first install.
+
+In **Simulate → Underbody sensors**, start the payload to publish synthetic LiDAR, camera, IMU, GNSS and frame transforms. The game displays its LAN/Tailscale Foxglove addresses. Native ROS 2 uses domain 42 by default, with interface and peer settings for unicast discovery. Windows provides a firewall setup button requiring administrator approval; other systems may need OS firewall permission.
+
+This is a geometry and transport prototype. Sensor noise, drift and the Avia firing law are not hardware-calibrated, and full-workload rates are not guaranteed. Read each release's validation notes before relying on a platform or network configuration. It is not connected to a real aircraft.
+
+Releases are published manually, only when requested.
